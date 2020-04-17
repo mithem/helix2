@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Helix - Login</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:200,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #fafafa;
+      }
+      .noselect {
+        user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      nav {
+        background-color: #ffffff;
+        height: 60px;
+        width: 100%;
+        display: flex;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #cccccc;
+      }
+      nav > .placeholder {
+        flex-grow: 2;
+        width: 300px;
+        height: 100%;
+      }
+      nav > h2#helix {
+        font-weight: 600;
+        font-size: 14pt;
+        padding-left: 20px;
+        letter-spacing: 4px;
+        flex-grow: 1;
+        margin: auto 0px;
+        font-family: "Poppins", "Sans-serif";
+      }
+      .formContainer {
+        background-color: #eaeaea;
+        width: 500px;
+        height: 500px;
+        border-radius: 50px;
+        margin: auto;
+      }
+      .formContainer > h2 {
+        font-family: "Poppins", "Sans-Serif";
+        font-weight: 600;
+        margin-left: 30px;
+        padding-top: 20px;
+      }
+      .formContainer > form#loginForm {
+        display: grid;
+        grid-template-columns: 200px;
+        grid-template-rows: auto auto;
+        margin-left: 30px;
+      }
+      form#loginForm > div.fieldGroup {
+        margin: 20px 0px;
+      }
+      form#loginForm > div.fieldGroup > input {
+        background-color: white;
+        border: none;
+        border-radius: 6px;
+        height: 24px;
+        width: 220px;
+      }
+      form#loginForm > div.fieldGroup > span {
+        font-family: "Poppins", "Sans-Serif";
+        font-weight: 200;
+        font-size: 24px;
+      }
+      .buttonBar {
+        margin: 130px 40px;
+        display: flex;
+      }
+      .placeholder {
+        flex-grow: 1;
+      }
+      button.btn {
+        color: white;
+        background-color: #4884f0;
+        font-family: "Poppins", "Sans-Serif";
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        border-radius: 6px;
+        width: 90px;
+        height: 35px;
+        transition: 0.2s;
+      }
+      button.btn:hover {
+        transform: scale(1.03);
+      }
+      button.btn:disabled {
+        background-color: #333333;
+        transform: scale(0.8);
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #030303;
+          color: white;
+        }
+        nav {
+          background-color: #333333;
+          box-shadow: none;
+        }
+        .formContainer {
+          background-color: #1a1a1a;
+          color: white;
+        }
+        form#loginForm > div.fieldGroup > input {
+          background-color: #333333;
+          color: white;
+        }
+      }
+      @media screen and (max-width: 600px) {
+        .formContainer {
+          width: 300px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <h2 id="helix">HELIX</h2>
+    </nav>
+    <div class="formContainer">
+      <h2>login</h2>
+      <form id="loginForm">
+        <div class="fieldGroup">
+          <span>username</span>
+          <input type="text" name="username" id="username" />
+        </div>
+        <div class="fieldGroup">
+          <span>password</span>
+          <input type="text" name="password" id="password" />
+        </div>
+      </form>
+      <div class="buttonBar">
+        <button id="registerBtn" class="btn">register</button>
+        <div class="placeholder"></div>
+        <button id="loginBtn" class="btn" onclick="event.stopPropagation()">
+          login
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    function setCookie(cname, cvalue, exhours) {
+      var d = new Date();
+      d.setTime(d.getTime() + exhours * 60 * 60 * 1000);
+      var expires = "expires=" + d.toUTCString();
+      document.cookie = cname + "=" + cvalue + ";" + expires + ";";
+    }
+    function getCookie(cname) {
+      var name = cname + "=";
+      var decodedCookie = decodeURIComponent(document.cookie);
+      var ca = decodedCookie.split(";");
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == " ") {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+    function handleResponse(response) {
+      if (response == "Login successful") {
+        setCookie("username", document.querySelector("#username").value, 1);
+        setCookie("password", document.querySelector("#password").value, 1);
+        document.location.href = "SUPERPATH/dashboard";
+      } else {
+        document.querySelector(".formContainer").innerHTML +=
+          "<div class='responsebox error'><p style='text-align: center; font-size: 20px; font-family: \"Poppins\"'>" +
+          response +
+          "</p></div>";
+        enableButtons();
+      }
+    }
+
+    function disableButtons() {
+      document.getElementById("loginBtn").disabled = true;
+      document.getElementById("registerBtn").disabled = true;
+    }
+
+    function enableButtons() {
+      document.getElementById("loginBtn").disabled = false;
+      document.getElementById("registerBtn").disabled = false;
+    }
+
+    function tryLogin() {
+      console.debug("trying to log in");
+      var data = {};
+      setCookie("username", "");
+      setCookie("password", "");
+      data["username"] = document.querySelector("#username").value;
+      data["password"] = document.querySelector("#password").value;
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == XMLHttpRequest.DONE) {
+          console.info("Server response: " + req.responseText);
+          handleResponse(req.responseText);
+        }
+      };
+      req.open("POST", "SUPERPATH/api/login", true);
+      console.info("opened xmltthprequest to 'SUPERPATH/api/login'");
+      req.send(JSON.stringify(data));
+    }
+
+    document.querySelector("button#loginBtn").addEventListener("click", () => {
+      disableButtons();
+      tryLogin();
+    });
+
+    document
+      .querySelector("button#registerBtn")
+      .addEventListener("click", () => {
+        disableButtons();
+        document.location.href = "SUPERPATH/register";
+      });
+  </script>
+</html>

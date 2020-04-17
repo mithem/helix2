@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script>
+      Date.prototype.addDays = function(days) {
+        var date = new Date(this.valueOf());
+        date.setDate(date.getDate() + days);
+        return date;
+      };
+      Element.prototype.remove = function() {
+        this.parentElement.removeChild(this);
+      };
+      function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      const username = getCookie("username");
+      const password = getCookie("password");
+
+      function setCookie(cname, cvalue, exhours) {
+        var d = new Date();
+        d.setTime(d.getTime() + exhours * 60 * 60 * 1000);
+        var expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";";
+      }
+      function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(";");
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i];
+          while (c.charAt(0) == " ") {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+      function checkCookie(cname) {
+        var value = getCookie(cname);
+        return value != "";
+      }
+
+      function deleteTask(id) {
+        console.info("deleting task with id " + id);
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.status == 200 && req.readyState == 4) {
+            applyFilters();
+          } else if (
+            req.status == 500 ||
+            req.status == 401 ||
+            req.status == 406
+          ) {
+            alert("Server response not ok. Status code: " + req.status);
+            console.error("(falsy) server response: " + req.responseText);
+          }
+        };
+        req.open("DELETE", "SUPERPATH/api/deletetask");
+        req.send(
+          JSON.stringify({
+            username: username,
+            password: password,
+            id: id
+          })
+        );
+      }
+      function editDate(datetype, taskid) {
+        var datevalue = prompt("New " + datetype + "? (2020-01-01T00:00:00)");
+        var dict = { username: username, password: password, id: taskid };
+        dict[datetype] = datevalue;
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.readyState === 4) {
+            if (req.status === 200) {
+              console.info(
+                "updated " + datetype + " for task with id " + taskid
+              );
+            } else {
+              alert(
+                "Server response not ok. Status code: " +
+                  req.status +
+                  "\n\n" +
+                  req.responseText
+              );
+            }
+          }
+        };
+        req.open("PUT", "SUPERPATH/api/changetask", true);
+        req.send(JSON.stringify(dict));
+      }
+      function showTasks(tasks) {
+        document.querySelector(".taskViewContainer").innerHTML = "";
+        const template = `<div class="taskContainer">
+      <div class="textContent">
+      <span class="task-title" onclick="changeTask(PLACEHOLDER_ID, 'title')">PLACEHOLDER_TaskTitle</span><br />
+      <span class="task-description" onclick="changeTask(PLACEHOLDER_ID, 'description')">
+      PLACEHOLDER_Description
+      </span>
+      <div class="placeholder"></div>
+      <span class="task-dates">PLACEHOLDER_DATES</span>
+      </div>
+      <div style="flex-grow:1"></div>
+      <div class="quickActionPanel">
+      <svg class="dueDate" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round" version="1.1" viewBox="0 0 96 96" onclick="editDate('dueDate', PLACEHOLDER_ID)">
+      <path d="M34.0208+17.2613C32.5609+17.2613+31.594+18.2282+31.594+19.6881L31.594+26.9685C31.594+28.4284+32.5609+29.3953+34.0208+29.3953C35.4807+29.3953+36.4476+28.4284+36.4476+26.9685L36.4476+19.6881C36.4476+18.2282+35.4807+17.2613+34.0208+17.2613ZM63.1424+17.2613C61.6826+17.2613+60.7156+18.2282+60.7156+19.6881L60.7156+26.9685C60.7156+28.4284+61.6826+29.3953+63.1424+29.3953C64.6023+29.3953+65.5692+28.4284+65.5692+26.9685L65.5692+19.6881C65.5692+18.2282+64.6023+17.2613+63.1424+17.2613ZM24.3136+22.1149C20.1899+22.1149+17.0332+25.2716+17.0332+29.3953L17.0332+73.0778C17.0332+77.2014+20.1899+80.3582+24.3136+80.3582L72.8496+80.3582C76.9733+80.3582+80.1301+77.2014+80.1301+73.0778L80.1301+29.3953C80.1301+25.2716+76.9733+22.1149+72.8496+22.1149L67.996+22.1149L67.996+26.9685C67.996+29.6418+65.8157+31.8221+63.1424+31.8221C60.4692+31.8221+58.2888+29.6418+58.2888+26.9685L58.2888+22.1149L38.8744+22.1149L38.8744+26.9685C38.8744+29.6418+36.6941+31.8221+34.0208+31.8221C31.3475+31.8221+29.1672+29.6418+29.1672+26.9685L29.1672+22.1149L24.3136+22.1149ZM21.8868+39.1025L75.2765+39.1025L75.2765+73.0778C75.2765+74.5376+74.3095+75.5046+72.8496+75.5046L24.3136+75.5046C22.8537+75.5046+21.8868+74.5376+21.8868+73.0778L21.8868+39.1025ZM39.3294+47.3688L34.0208+49.7956L34.7792+53.4358L38.6469+51.464L38.6469+67.9966L43.273+67.9966L43.273+47.3688L39.3294+47.3688ZM51.9943+47.3688L50.7809+58.0619C51.5108+57.8154+52.2218+57.7586+53.4352+57.7586C57.5589+57.7586+59.2747+58.9909+59.2747+61.1713C59.2747+63.3516+57.047+64.3564+55.1037+64.3564C53.1603+64.3564+51.5203+63.854+50.5534+63.3706L49.5675+67.0108C50.7809+67.7407+52.9802+68.2242+55.407+68.2242C60.7441+68.2242+64.1283+64.8304+64.1283+60.9437C64.1283+58.5169+63.1614+56.8296+61.7015+55.8626C60.2416+54.8957+58.2604+54.4217+56.3171+54.4217L55.1037+54.4217L55.6345+51.2365L63.3699+51.2365L63.3699+47.3688L51.9943+47.3688Z" opacity="1" fill="#000000" />
+      </svg>
+      <svg style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round" version="1.1" viewBox="0 0 96 96" onclick="editDate('deadline', PLACEHOLDER_ID)">
+      <path d="M34.0208+17.2613C32.5609+17.2613+31.594+18.2282+31.594+19.6881L31.594+26.9685C31.594+28.4284+32.5609+29.3953+34.0208+29.3953C35.4807+29.3953+36.4476+28.4284+36.4476+26.9685L36.4476+19.6881C36.4476+18.2282+35.4807+17.2613+34.0208+17.2613ZM63.1424+17.2613C61.6826+17.2613+60.7156+18.2282+60.7156+19.6881L60.7156+26.9685C60.7156+28.4284+61.6826+29.3953+63.1424+29.3953C64.6023+29.3953+65.5692+28.4284+65.5692+26.9685L65.5692+19.6881C65.5692+18.2282+64.6023+17.2613+63.1424+17.2613ZM24.3136+22.1149C20.1899+22.1149+17.0332+25.2716+17.0332+29.3953L17.0332+73.0778C17.0332+77.2014+20.1899+80.3582+24.3136+80.3582L72.8496+80.3582C76.9733+80.3582+80.1301+77.2014+80.1301+73.0778L80.1301+29.3953C80.1301+25.2716+76.9733+22.1149+72.8496+22.1149L67.996+22.1149L67.996+26.9685C67.996+29.6418+65.8157+31.8221+63.1424+31.8221C60.4692+31.8221+58.2888+29.6418+58.2888+26.9685L58.2888+22.1149L38.8744+22.1149L38.8744+26.9685C38.8744+29.6418+36.6941+31.8221+34.0208+31.8221C31.3475+31.8221+29.1672+29.6418+29.1672+26.9685L29.1672+22.1149L24.3136+22.1149ZM21.8868+39.1025L75.2765+39.1025L75.2765+73.0778C75.2765+74.5376+74.3095+75.5046+72.8496+75.5046L24.3136+75.5046C22.8537+75.5046+21.8868+74.5376+21.8868+73.0778L21.8868+39.1025ZM39.3294+47.3688L34.0208+49.7956L34.7792+53.4358L38.6469+51.464L38.6469+67.9966L43.273+67.9966L43.273+47.3688L39.3294+47.3688ZM51.9943+47.3688L50.7809+58.0619C51.5108+57.8154+52.2218+57.7586+53.4352+57.7586C57.5589+57.7586+59.2747+58.9909+59.2747+61.1713C59.2747+63.3516+57.047+64.3564+55.1037+64.3564C53.1603+64.3564+51.5203+63.854+50.5534+63.3706L49.5675+67.0108C50.7809+67.7407+52.9802+68.2242+55.407+68.2242C60.7441+68.2242+64.1283+64.8304+64.1283+60.9437C64.1283+58.5169+63.1614+56.8296+61.7015+55.8626C60.2416+54.8957+58.2604+54.4217+56.3171+54.4217L55.1037+54.4217L55.6345+51.2365L63.3699+51.2365L63.3699+47.3688L51.9943+47.3688Z" opacity="1" fill="#ff0000" />
+      </svg>
+      <svg class="trashcan" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round" version="1.1" viewBox="0 0 96 96" onclick="event.stopPropagation(), deleteTask(PLACEHOLDER_ID)">
+      <path d="M21.7973+22.5007C20.3302+22.5007+19.1335+23.6973+19.1335+25.1645L19.1335+30.492C19.1335+31.9592+20.3302+33.1558+21.7973+33.1558L22.4633+33.1558L28.54+69.6994C28.54+69.7515+28.54+69.8139+28.54+69.8659C28.977+71.9678+29.7886+73.9656+31.287+75.6097C32.7854+77.2537+35.0745+78.4399+37.6135+78.4399L59.2566+78.4399C61.7851+78.4399+64.0639+77.3266+65.5831+75.6929C67.1022+74.0593+67.9347+71.947+68.3301+69.7827C68.3301+69.7515+68.3301+69.7306+68.3301+69.6994L74.49+33.1558L75.0727+33.1558C76.5399+33.1558+77.7365+31.9592+77.7365+30.492L77.7365+25.1645C77.7365+23.6973+76.5399+22.5007+75.0727+22.5007L21.7973+22.5007ZM27.7908+33.1558L29.6221+33.1558L32.7854+36.319L28.9562+40.065L27.7908+33.1558ZM33.3681+33.1558L35.8654+33.1558L34.6167+34.4045L33.3681+33.1558ZM39.528+33.1558L44.0232+33.1558L46.4372+35.5699L41.1097+40.8974L36.4481+36.2358L39.528+33.1558ZM47.8523+33.1558L48.768+33.1558L48.3518+33.6553L47.8523+33.1558ZM52.5972+33.1558L57.0923+33.1558L60.1723+36.2358L55.5107+40.8974L50.1831+35.4866L52.5972+33.1558ZM60.755+33.1558L63.2523+33.1558L62.0036+34.4045L60.755+33.1558ZM66.9982+33.1558L69.1625+33.1558L67.9971+40.3147L63.9182+36.2358L66.9982+33.1558ZM48.2685+37.4012L53.6793+42.7287L48.2685+48.0563L42.941+42.7287L48.2685+37.4012ZM34.6167+38.1504L39.1951+42.7287L33.8675+48.0563L29.5389+43.7277L29.4557+43.3114L34.6167+38.1504ZM62.0036+38.1504L67.3312+43.4779L62.7528+48.1395L57.4253+42.7287L62.0036+38.1504ZM41.1097+44.6433L46.4372+49.9709L41.1097+55.2984L35.7821+49.9709L41.1097+44.6433ZM55.5107+44.6433L60.9215+49.9709L55.5939+55.2984L50.1831+49.9709L55.5107+44.6433ZM66.6652+47.973L66.0825+51.4692L64.5841+49.9709L66.6652+47.973ZM30.2881+48.2228L32.0362+49.9709L30.7875+51.2195L30.2881+48.2228ZM33.8675+51.8022L39.1951+57.1298L33.8675+62.5405L32.3692+61.0422L31.287+54.3827L33.8675+51.8022ZM48.2685+51.8022L53.6793+57.213L48.3518+62.5405L42.941+57.1298L48.2685+51.8022ZM62.7528+51.8022L65.5831+54.6325L64.5009+60.7092L62.7528+62.4573L57.4253+57.1298L62.7528+51.8022ZM41.1097+59.0443L46.4372+64.3719L41.1097+69.7827L35.7821+64.4551L41.1097+59.0443ZM55.5107+59.0443L60.8382+64.3719L55.5107+69.6994L50.1831+64.3719L55.5107+59.0443ZM33.9508+66.2865L39.2783+71.614L37.7799+73.1124L37.6135+73.1124C36.5729+73.1124+35.959+72.769+35.2827+72.0302C34.6271+71.3123+33.982+70.1677+33.701+68.867L33.701+68.7838L33.3681+66.7859L33.9508+66.2865ZM48.3518+66.2865L53.6793+71.614L52.181+73.1124L44.4394+73.1124L42.941+71.614L48.3518+66.2865ZM62.7528+66.2865L63.502+67.0357L63.169+68.7838C63.169+68.815+63.1794+68.8358+63.169+68.867C62.9193+70.1677+62.3262+71.3227+61.6706+72.0302C61.0047+72.7482+60.3179+73.1124+59.2566+73.1124L58.9236+73.1124L57.4253+71.614L62.7528+66.2865Z" opacity="1" fill="#777777" />
+      </svg>
+      </div>
+      </div>`;
+        tasks.forEach(task => {
+          taskDatesDescription = "";
+          if (task["dateDue"] != "" && task["deadline"] != "") {
+            taskDatesDescription +=
+              "due date: " +
+              task["dateDue"] +
+              "; deadline: " +
+              task["deadline"];
+          } else if (task["dateDue"] != "" && task["deadline"] == "") {
+            taskDatesDescription += "due date: " + task["dateDue"];
+          } else if (task["deadline"] != "" && task["dateDue"] == "") {
+            taskDatesDescription += "deadline: " + task["deadline"];
+          }
+          document.querySelector(".taskViewContainer").innerHTML += template
+            .replace("PLACEHOLDER_TaskTitle", task["title"])
+            .replace("PLACEHOLDER_Description", task["description"])
+            .replace("PLACEHOLDER_ID", task["id"])
+            .replace("PLACEHOLDER_ID", task["id"])
+            .replace("PLACEHOLDER_ID", task["id"])
+            .replace("PLACEHOLDER_DATES", taskDatesDescription);
+        });
+      }
+
+      function getTasks(
+        getAll,
+        title,
+        description,
+        dueDate = "",
+        deadline = ""
+      ) {
+        console.debug("getting tasks...");
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = () => {
+          if (req.readyState == XMLHttpRequest.DONE) {
+            if (req.status == 401) {
+              console.error(
+                "Authentication data invalid. Please log in first."
+              );
+              document.location.href = "SUPERPATH/login";
+            } else if (req.status != 200) {
+              var str =
+                "Server response not ok. Status code: " + req.status.toString();
+              console.error(str);
+              console.log("Server response: " + req.responseText);
+              alert(str);
+              alert(req.responseText);
+            } else {
+              parsed = JSON.parse(req.responseText);
+              showTasks(parsed);
+            }
+          }
+        };
+        req.open("GET", "SUPERPATH/api/gettasks", true);
+        var request_data = JSON.stringify({
+          username: username,
+          password: password,
+          getAll: getAll,
+          title: title,
+          description: description,
+          dueDate: dueDate,
+          deadline: deadline
+        });
+        req.send(request_data);
+      }
+      function initFilters() {
+        console.debug("initializing filters…");
+        // changing naming of date-dependent options to match current date
+        for (var i = 0; i < 5; i++) {
+          var dnow = new Date();
+          var d = dnow.addDays(i);
+          var dayName = "Err";
+          switch (d.getDay()) {
+            case 0:
+              dayName = "Sun";
+              break;
+            case 1:
+              dayName = "Mon";
+              break;
+            case 2:
+              dayName = "Tue";
+              break;
+            case 3:
+              dayName = "Wed";
+              break;
+            case 4:
+              dayName = "Thu";
+              break;
+            case 5:
+              dayName = "Fri";
+              break;
+            case 6:
+              dayName = "Sat";
+          }
+          document.querySelector(
+            ".filter#dueDateFilter > .filterOptions > ul > li#o" +
+              (i + 1).toString()
+          ).innerHTML = dayName;
+          document.querySelector(
+            ".filter#deadlineFilter > .filterOptions > ul >li#o" +
+              (i + 1).toString()
+          ).innerHTML = dayName;
+          document
+            .getElementById("anytimeFilter")
+            .addEventListener("click", () => {
+              document
+                .querySelector("#anytimeFilter > .filterMetadata > .filterName")
+                .classList.toggle("highlighted");
+              document
+                .querySelector("#anytimeClock")
+                .classList.toggle("highlighted");
+            });
+        }
+
+        // making options clickable!
+        var filterOptionContainers = Array.from(
+          document.querySelectorAll(".filter > .filterOptions > ul")
+        );
+        filterOptionContainers.forEach(function(optionContainer) {
+          Array.from(optionContainer.children).forEach(function(button) {
+            button.addEventListener("click", () => {
+              button.classList.toggle("highlighted");
+            });
+          });
+        });
+      }
+      function hideContextMenu() {
+        document.querySelector(".contextmenu").remove();
+      }
+      function showContextMenu(x, y) {
+        document.body.innerHTML +=
+          '<div class="contextmenu" style="top: ' +
+          (y - 20).toString() +
+          "px;left: " +
+          (x - 20).toString() +
+          'px" onmouseleave="hideContextMenu();"><p id="btnRefresh">refresh</p><hr /><p id="btnLogout">logout</p><hr /><p id="btnAccount">account</p></div>';
+        document.getElementById("btnRefresh").addEventListener("click", () => {
+          getTasks(true);
+          hideContextMenu();
+          initFilters();
+        });
+        document.getElementById("btnLogout").addEventListener("click", () => {
+          setCookie("username", "");
+          setCookie("password", "");
+          document.location.href = "SUPERPATH/login";
+        });
+        document.getElementById("btnAccount").addEventListener("click", () => {
+          document.location.href = "SUPERPATH/account";
+        });
+      }
+      async function reportStats() {
+        while (true) {
+          var req = new XMLHttpRequest();
+          req.open("POST", "SUPERPATH/api/statistics/sayhello", true);
+          req.send(JSON.stringify({ username: username, password: password }));
+          await sleep(10000);
+        }
+      }
+      function initBody() {
+        document.getElementById("plusBtn").addEventListener("click", () => {
+          createTask();
+        });
+        if (
+          /iPad|iPhone|iPod|(A|a)ndroid/.test(navigator.userAgent) &&
+          !window.MSStream
+        ) {
+          //mobile
+          console.info("mobile version!");
+          document.querySelector(".filterContainer").innerHTML +=
+            "<button id='applyFilterBtn' onclick='applyFilters()'>apply filters</button>";
+          document.getElementById("helix").addEventListener("click", () => {
+            var r = confirm(
+              "Press ok for account settings or cancel for logout"
+            );
+            if (r) {
+              document.location.href = "SUPERPATH/account";
+            } else {
+              setCookie("username", "");
+              setCookie("password", "");
+              document.location.href = "SUPERPATH/login";
+            }
+          });
+        } else {
+          // desktop
+          document.getElementById("hamburger").style.display = "none";
+          document.body.addEventListener("contextmenu", ev => {
+            ev.preventDefault();
+            showContextMenu(ev.clientX, ev.clientY);
+            return false;
+          });
+
+          var trashcans = document.querySelectorAll(".trashcan");
+          trashcans.forEach(trashcan => {
+            trashcan.addEventListener("hover", () => {
+              trashcan.style.fill = "red";
+            });
+          });
+        }
+        document.body.addEventListener("keyup", function(e) {
+          var code = e.code;
+          if (code == "KeyR") {
+            getTasks(true);
+          } else if (code == "KeyK") {
+            alert(
+              "Keyboard shortcuts:\n\nK: show Keyboard shortcuts\nR: refresh tasks\nA: add task\nS: go to account settings page\nL: go to login page"
+            );
+          } else if (code == "KeyA") {
+            createTask();
+          } else if (code == "KeyS") {
+            document.location.href = "SUPERPATH/account";
+          } else if (code == "KeyL") {
+            document.location.href = "SUPERPATH/login";
+          }
+        });
+      }
+      function createTask() {
+        var title = prompt("title of new task?");
+        if (title == null || title == "") {
+          return false;
+        }
+        var description = prompt("description?");
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.status != 200 && req.readyState == 4) {
+            alert("Server response not ok. Status code: " + req.status);
+          } else {
+            applyFilters();
+          }
+        };
+        req.open("POST", "SUPERPATH/api/addtask");
+        req.send(
+          JSON.stringify({
+            username: username,
+            password: password,
+            title: title,
+            description: description
+          })
+        );
+      }
+      function applyFilters() {
+        console.debug("applying filters...");
+        var dueDateDaysForward = 0;
+        for (var i = 5; i >= 1; i--) {
+          if (
+            document
+              .querySelector(
+                ".filter#dueDateFilter > .filterOptions > ul > li#o" +
+                  i.toString()
+              )
+              .classList.contains("highlighted")
+          ) {
+            dueDateDaysForward = i;
+            break;
+          }
+        }
+        for (var i = 1; i <= dueDateDaysForward; i++) {
+          document.querySelector(
+            ".filter#dueDateFilter > .filterOptions > ul >li#o" + i.toString()
+          ).classList = "highlighted";
+        }
+        var deadlineDaysForward = 0;
+        for (var i = 5; i >= 1; i--) {
+          if (
+            document
+              .querySelector(
+                ".filter#deadlineFilter > .filterOptions > ul >li#o" +
+                  i.toString()
+              )
+              .classList.contains("highlighted")
+          ) {
+            deadlineDaysForward = i;
+            break;
+          }
+        }
+        for (var i = 1; i <= deadlineDaysForward; i++) {
+          document.querySelector(
+            ".filter#deadlineFilter > .filterOptions > ul >li#o" + i.toString()
+          ).classList = "highlighted";
+        }
+        var dueDate = new Date();
+        dueDate = dueDate.addDays(dueDateDaysForward);
+        var deadline = new Date();
+        deadline = deadline.addDays(deadlineDaysForward);
+
+        var getAll = document
+          .querySelector("#anytimeFilter > .filterMetadata > .filterName")
+          .classList.contains("highlighted");
+        getTasks(getAll, "", "", dueDate.toISOString(), deadline.toISOString());
+      }
+      function changeTask(id, property) {
+        var dict = { username: username, password: password, id: id };
+        dict[property] = prompt("New " + property + "?");
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.readyState === 4) {
+            if (req.status == 200) {
+              applyFilters();
+            } else {
+              alert(
+                "Server response not ok. Status code: " +
+                  req.status.toString() +
+                  "\n\n" +
+                  req.responseText.toString()
+              );
+            }
+          }
+        };
+        req.open("PUT", "SUPERPATH/api/changetask", true);
+        req.send(JSON.stringify(dict));
+      }
+      function search(str) {
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.readyState == 4) {
+            if (req.status == 200) {
+              showTasks(JSON.parse(req.responseText));
+            } else {
+              alert(
+                "Server response not ok. Status code: " +
+                  req.status.toString() +
+                  "\n\n" +
+                  req.responseText
+              );
+            }
+          }
+        };
+        req.open("GET", "SUPERPATH/api/gettasks", true);
+        req.send(
+          JSON.stringify({
+            username: username,
+            password: password,
+            general: str
+          })
+        );
+      }
+      function toggleHamburger() {
+        document.getElementById("hamburger").classList.toggle("is-active");
+        document
+          .getElementById("hamburger-links")
+          .classList.toggle("is-active");
+      }
+    </script>
+    <title>Helix</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:200,400,500,600,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /*!
+      * Hamburgers
+      * @description Tasty CSS-animated hamburgers
+      * @author Jonathan Suh @jonsuh
+      * @site https://jonsuh.com/hamburgers
+      * @link https://github.com/jonsuh/hamburgers
+      */
+      .hamburger {
+        padding: 15px 15px;
+        display: inline-block;
+        cursor: pointer;
+        transition-property: opacity, filter;
+        transition-duration: 0.15s;
+        transition-timing-function: linear;
+        font: inherit;
+        color: inherit;
+        text-transform: none;
+        background-color: transparent;
+        border: 0;
+        margin: 0;
+        overflow: visible;
+      }
+      .hamburger:hover {
+        opacity: 0.7;
+      }
+      .hamburger.is-active:hover {
+        opacity: 0.7;
+      }
+      .hamburger.is-active .hamburger-inner,
+      .hamburger.is-active .hamburger-inner::before,
+      .hamburger.is-active .hamburger-inner::after {
+        background-color: #000;
+      }
+
+      .hamburger-box {
+        width: 20px;
+        height: 12px;
+        display: inline-block;
+        position: relative;
+      }
+
+      .hamburger-inner {
+        display: block;
+        top: 50%;
+        margin-top: -2px;
+      }
+      .hamburger-inner,
+      .hamburger-inner::before,
+      .hamburger-inner::after {
+        width: 20px;
+        height: 2px;
+        background-color: #000;
+        border-radius: 2px;
+        position: absolute;
+        transition-property: transform;
+        transition-duration: 0.15s;
+        transition-timing-function: ease;
+      }
+      .hamburger-inner::before,
+      .hamburger-inner::after {
+        content: "";
+        display: block;
+      }
+      .hamburger-inner::before {
+        top: -5px;
+      }
+      .hamburger-inner::after {
+        bottom: -5px;
+      }
+
+      /*
+        * Collapse
+        */
+      .hamburger--collapse .hamburger-inner {
+        top: auto;
+        bottom: 0;
+        transition-duration: 0.13s;
+        transition-delay: 0.13s;
+        transition-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+      }
+      .hamburger--collapse .hamburger-inner::after {
+        top: -10px;
+        transition: top 0.2s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
+          opacity 0.1s linear;
+      }
+      .hamburger--collapse .hamburger-inner::before {
+        transition: top 0.12s 0.2s cubic-bezier(0.33333, 0.66667, 0.66667, 1),
+          transform 0.13s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+      }
+
+      .hamburger--collapse.is-active .hamburger-inner {
+        transform: translate3d(0, -5px, 0) rotate(-45deg);
+        transition-delay: 0.22s;
+        transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+      }
+      .hamburger--collapse.is-active .hamburger-inner::after {
+        top: 0;
+        opacity: 0;
+        transition: top 0.2s cubic-bezier(0.33333, 0, 0.66667, 0.33333),
+          opacity 0.1s 0.22s linear;
+      }
+      .hamburger--collapse.is-active .hamburger-inner::before {
+        top: 0;
+        transform: rotate(-90deg);
+        transition: top 0.1s 0.16s cubic-bezier(0.33333, 0, 0.66667, 0.33333),
+          transform 0.13s 0.25s cubic-bezier(0.215, 0.61, 0.355, 1);
+      }
+      @keyframes hamburger-fade-in {
+        from {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0px);
+        }
+      }
+      @keyframes hamburger-fade-out {
+        from {
+          opacity: 1;
+          transform: translateX(0px);
+        }
+        to {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+      }
+      ul#hamburger-links {
+        display: none;
+        z-index: -1;
+      }
+      ul#hamburger-links.is-active {
+        display: flex;
+        list-style-type: none;
+        z-index: -1;
+        justify-content: space-evenly;
+      }
+      ul#hamburger-links > li {
+        padding: 5px;
+        margin: 5px 10px;
+        background-color: #eeeeee;
+        border-radius: 5px;
+        animation: hamburger-fade-in 0.3s ease-out;
+      }
+      ul#hamburger-links > li:hover {
+        background-color: red;
+      }
+
+      button#applyFilterBtn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        height: 40px;
+        width: unset;
+        margin: 20px;
+        font-weight: 500;
+        font-size: 16px;
+        transition: 0.3s;
+        background-color: white;
+      }
+      button#applyFilterBtn:hover {
+        background-color: #eeeeee;
+      }
+      button#applyFilterBtn:disabled {
+        background-color: #333333;
+        color: white;
+      }
+      svg.trashcan:hover > path {
+        fill: #e8564e;
+      }
+      svg.highlighted > path {
+        fill: #4177d8;
+      }
+      .contextmenu {
+        position: fixed;
+        z-index: 1;
+        background-color: #dedede;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #aaaaaa;
+        border-radius: 5px;
+      }
+      .contextmenu > * {
+        margin: 0px;
+        padding: 0px 10px;
+      }
+      .placeholder {
+        flex-grow: 1;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        background-color: #fafafa;
+        overflow: hidden;
+        font-family: "Poppins", "Sans-serif", "Times New Roman";
+      }
+      .noselect {
+        user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      nav {
+        background-color: #ffffff;
+        max-height: 8%;
+        width: 100%;
+        display: flex;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #cccccc;
+      }
+      nav > .placeholder {
+        flex-grow: 2;
+        width: 300px;
+        height: 100%;
+      }
+      nav > h2#helix {
+        font-weight: 600;
+        font-size: 14pt;
+        padding-left: 20px;
+        letter-spacing: 4px;
+        flex-grow: 1;
+        margin: auto 0px;
+      }
+      nav > .nav-right > input#searchbar {
+        margin: 2px 30px;
+        width: 175px;
+        border: none;
+        border-radius: 10px;
+        background-color: #eeeeee;
+      }
+      nav > .nav-right > svg {
+        margin: auto;
+        transition: 0.3s;
+      }
+      nav > .nav-right > svg:hover {
+        transform: scale(1.125);
+        transition: 0.3s;
+      }
+      nav > .nav-right {
+        padding: 15px;
+        display: flex;
+      }
+      .contentContainer {
+        display: flex;
+      }
+      .contentContainer > div {
+        margin: 20px;
+      }
+      .filterContainer {
+        height: 600px;
+        width: 300px;
+        background-color: #e5e5e5;
+        border: none;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 0;
+        flex-shrink: 0;
+      }
+      .filterContainer > .heading {
+        display: flex;
+        margin: 20px;
+        margin-right: 35px;
+      }
+      .filterContainer > .heading > svg {
+        width: 46px;
+        height: 46px;
+        margin: auto 0px auto 10px;
+      }
+      .filterContainer > .heading > h3 {
+        font-weight: 800;
+      }
+      .filter {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+      }
+      .filter > .filterMetadata {
+        display: flex;
+      }
+      .filter > .filterMetadata > svg {
+        height: 26px;
+        width: 26px;
+        margin: auto 0px auto 20px;
+        transition: 0.3s;
+      }
+      .filter > .filterMetadata > span.filterName {
+        font-weight: 600;
+        margin-left: 10px;
+      }
+      .filter > .filterMetadata > span.filterName.highlighted {
+        color: #4177d8;
+        transition: 0.3s;
+      }
+      .filter > .filterOptions > ul {
+        margin: 5px 0px;
+      }
+      .filter > .filterOptions > ul > li {
+        display: inline;
+        border: none;
+        border-radius: 5px;
+        background-color: #cccccc;
+        margin: 0px;
+        padding: 5px;
+        animation: dehighlight 0.3s alternate;
+      }
+      .filter > .filterOptions > ul > li.highlighted {
+        animation: highlight 0.3s alternate;
+        background-color: #e9d37a;
+      }
+      @keyframes highlight {
+        0% {
+          font-size: 15px;
+          background-color: #cccccc;
+        }
+        50% {
+          font-size: 16px;
+        }
+        100% {
+          font-size: 15px;
+          background-color: #e9d37a;
+        }
+      }
+      @keyframes dehighlight {
+        0% {
+          background-color: #e9d37a;
+        }
+        50% {
+          font-size: 14px;
+        }
+        100% {
+          font-size: 15px;
+          background-color: #cccccc;
+        }
+      }
+      .taskViewContainer {
+        height: 600px;
+        flex-grow: 2;
+        border: none;
+        display: grid;
+        grid-template-columns: 48% 48%;
+        grid-template-rows: 120px;
+        row-gap: 15px;
+        column-gap: 15px;
+        overflow-y: scroll;
+        min-width: 300px;
+      }
+      .taskViewContainer > .taskContainer {
+        background-color: #eeeeee;
+        height: 120px;
+        border: none;
+        border-radius: 20px;
+        display: flex;
+      }
+      .taskContainer > .textContent {
+        overflow: scroll;
+        padding: 0px 6px 0px 12px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .taskContainer > .textContent > span.task-title {
+        font-size: 18px;
+        font-weight: 500;
+        padding-top: 12px;
+      }
+      .taskContainer > .textContent > span.task-description {
+        font-weight: lighter;
+        font-size: 14px;
+      }
+      .taskContainer > .textContent > span.task-dates {
+        font-weight: 200;
+        font-size: 12px;
+      }
+      .taskContainer > .quickActionPanel {
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid #aaaaaa;
+        margin-right: 5px;
+      }
+      .taskContainer > .quickActionPanel > svg {
+        height: 40px;
+      }
+      @media screen and (max-width: 650px) {
+        body {
+          overflow-x: hidden;
+          overflow-y: scroll;
+        }
+        .filterContainer {
+          width: 90%;
+        }
+        .contentContainer {
+          flex-direction: column;
+        }
+        .taskContainer {
+          width: 110%;
+        }
+        nav > .nav-right > input#searchbar {
+          width: 100px;
+        }
+      }
+      @media screen and (max-width: 950px) {
+        .taskViewContainer,
+        .contentContainer {
+          height: unset;
+        }
+        .taskViewContainer {
+          grid-template-columns: 90%;
+          overflow-y: scroll;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #030303;
+        }
+        nav {
+          background-color: #333333;
+          color: #eeeeee;
+          box-shadow: none;
+        }
+        .filterContainer {
+          background-color: #1a1a1a;
+          color: #eeeeee;
+        }
+        .taskViewContainer > .taskContainer {
+          background-color: #1a1a1a;
+          color: #eeeeee;
+        }
+        .filter > .filterOptions > ul > li {
+          color: black;
+        }
+        .filter#dueDateFilter > .filterMetadata > svg > path {
+          fill: white;
+        }
+        .filter#anytimeFilter > .filterMetadata > svg#anytimeClock > path {
+          fill: white;
+        }
+        .filter#anytimeFilter
+          > .filterMetadata
+          > svg#anytimeClock.highlighted
+          > path {
+          fill: #4177d8;
+        }
+        .taskContainer > .quickActionPanel > svg.dueDate > path {
+          fill: white;
+        }
+        .taskContainer > .quickActionPanel > svg.trashcan > path {
+          fill: #999999;
+        }
+        .taskContainer > .quickActionPanel > svg.trashcan:hover > path {
+          fill: #ef564e;
+        }
+        button#applyFilterBtn {
+          background-color: #333333;
+          color: white;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <h2 id="helix" class="noselect">HELIX</h2>
+      <div class="placeholder"></div>
+      <div class="nav-right">
+        <svg
+          id="plusBtn"
+          height="28px"
+          viewBox="0 0 512 512"
+          width="28px"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m256 0c-141.164062 0-256 114.835938-256 256s114.835938 256 256 256 256-114.835938 256-256-114.835938-256-256-256zm0 0"
+            fill="#2196f3"
+          />
+          <path
+            d="m368 277.332031h-90.667969v90.667969c0 11.777344-9.554687 21.332031-21.332031 21.332031s-21.332031-9.554687-21.332031-21.332031v-90.667969h-90.667969c-11.777344 0-21.332031-9.554687-21.332031-21.332031s9.554687-21.332031 21.332031-21.332031h90.667969v-90.667969c0-11.777344 9.554687-21.332031 21.332031-21.332031s21.332031 9.554687 21.332031 21.332031v90.667969h90.667969c11.777344 0 21.332031 9.554687 21.332031 21.332031s-9.554687 21.332031-21.332031 21.332031zm0 0"
+            fill="#fafafa"
+          />
+        </svg>
+        <input
+          type="text"
+          name="search"
+          id="searchbar"
+          placeholder="search"
+          onkeyup="event.stopPropagation()"
+          onfocusout="search(document.getElementById('searchbar').value)"
+          onmouseout="search(document.getElementById('searchbar').value)"
+        />
+        <button
+          class="hamburger hamburger--collapse"
+          type="button"
+          id="hamburger"
+          onclick="toggleHamburger()"
+        >
+          <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+          </span>
+        </button>
+      </div>
+    </nav>
+    <ul id="hamburger-links">
+      <li onclick="event.stopPropagation(); console.info('login')">login</li>
+      <li>register</li>
+      <li>account</li>
+    </ul>
+    <div class="contentContainer">
+      <div class="filterContainer noselect" onmouseleave="applyFilters()">
+        <div class="heading">
+          <svg
+            style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;"
+            version="1.1"
+            viewBox="0 0 96 96"
+          >
+            <path
+              d="M21.4049+18.9132C20.7982+19.0276+20.3606+19.5647+20.3705+20.1863L20.3705+24.0056C20.3755+24.3338+20.4998+24.6471+20.7286+24.8808L40.7399+46.1255L40.7399+68.5636C40.7499+69.0062+40.9936+69.414+41.3765+69.6378L54.1074+77.2763C54.4953+77.5001+54.9776+77.5051+55.3705+77.2813C55.7584+77.0625+56.007+76.6497+56.017+76.2022L56.017+46.1255L75.8294+25.0798C75.8443+25.0648+75.8543+25.0549+75.8692+25.04L76.0283+24.8808C76.088+24.8212+76.1427+24.7515+76.1875+24.6819C76.2173+24.657+76.2422+24.6322+76.267+24.6023C76.3416+24.4382+76.3814+24.2642+76.3864+24.0852C76.3864+24.0603+76.3864+24.0304+76.3864+24.0056C76.3914+23.9409+76.3914+23.8713+76.3864+23.8067L76.3864+20.1863C76.3864+19.4851+75.8145+18.9132+75.1133+18.9132L21.6436+18.9132C21.6038+18.9132+21.5641+18.9132+21.5243+18.9132C21.4845+18.9132+21.4447+18.9132+21.4049+18.9132ZM26.2687+22.9678L70.4882+22.9678L70.4882+24.7642L53.4223+42.8666L43.3347+42.8666L26.2687+24.7642L26.2687+22.9678ZM44.2616+49.5123L52.4953+49.5123L52.4953+71.3831L44.2616+66.4622L44.2616+49.5123Z"
+              opacity="1"
+              fill="#e9d37a"
+            />
+          </svg>
+
+          <h3>Filter</h3>
+        </div>
+        <div class="filter" id="dueDateFilter">
+          <div class="filterMetadata">
+            <svg
+              style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round"
+              version="1.1"
+              viewBox="0 0 110 110"
+            >
+              <path
+                d="M34.0208+17.2613C32.5609+17.2613+31.594+18.2282+31.594+19.6881L31.594+26.9685C31.594+28.4284+32.5609+29.3953+34.0208+29.3953C35.4807+29.3953+36.4476+28.4284+36.4476+26.9685L36.4476+19.6881C36.4476+18.2282+35.4807+17.2613+34.0208+17.2613ZM63.1424+17.2613C61.6826+17.2613+60.7156+18.2282+60.7156+19.6881L60.7156+26.9685C60.7156+28.4284+61.6826+29.3953+63.1424+29.3953C64.6023+29.3953+65.5692+28.4284+65.5692+26.9685L65.5692+19.6881C65.5692+18.2282+64.6023+17.2613+63.1424+17.2613ZM24.3136+22.1149C20.1899+22.1149+17.0332+25.2716+17.0332+29.3953L17.0332+73.0778C17.0332+77.2014+20.1899+80.3582+24.3136+80.3582L72.8496+80.3582C76.9733+80.3582+80.1301+77.2014+80.1301+73.0778L80.1301+29.3953C80.1301+25.2716+76.9733+22.1149+72.8496+22.1149L67.996+22.1149L67.996+26.9685C67.996+29.6418+65.8157+31.8221+63.1424+31.8221C60.4692+31.8221+58.2888+29.6418+58.2888+26.9685L58.2888+22.1149L38.8744+22.1149L38.8744+26.9685C38.8744+29.6418+36.6941+31.8221+34.0208+31.8221C31.3475+31.8221+29.1672+29.6418+29.1672+26.9685L29.1672+22.1149L24.3136+22.1149ZM21.8868+39.1025L75.2765+39.1025L75.2765+73.0778C75.2765+74.5376+74.3095+75.5046+72.8496+75.5046L24.3136+75.5046C22.8537+75.5046+21.8868+74.5376+21.8868+73.0778L21.8868+39.1025ZM39.3294+47.3688L34.0208+49.7956L34.7792+53.4358L38.6469+51.464L38.6469+67.9966L43.273+67.9966L43.273+47.3688L39.3294+47.3688ZM51.9943+47.3688L50.7809+58.0619C51.5108+57.8154+52.2218+57.7586+53.4352+57.7586C57.5589+57.7586+59.2747+58.9909+59.2747+61.1713C59.2747+63.3516+57.047+64.3564+55.1037+64.3564C53.1603+64.3564+51.5203+63.854+50.5534+63.3706L49.5675+67.0108C50.7809+67.7407+52.9802+68.2242+55.407+68.2242C60.7441+68.2242+64.1283+64.8304+64.1283+60.9437C64.1283+58.5169+63.1614+56.8296+61.7015+55.8626C60.2416+54.8957+58.2604+54.4217+56.3171+54.4217L55.1037+54.4217L55.6345+51.2365L63.3699+51.2365L63.3699+47.3688L51.9943+47.3688Z"
+                opacity="1"
+                fill="#000000"
+              />
+            </svg>
+            <span class="filterName">Due Date</span>
+          </div>
+          <div class="filterOptions">
+            <ul>
+              <li id="o1">Mon</li>
+              <li id="o2">Tue</li>
+              <li id="o3">Wed</li>
+              <li id="o4">Thu</li>
+              <li id="o5">Fri</li>
+            </ul>
+          </div>
+        </div>
+        <div class="filter" id="deadlineFilter">
+          <div class="filterMetadata">
+            <svg
+              style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round"
+              version="1.1"
+              viewBox="0 0 110 110"
+            >
+              <path
+                d="M34.0208+17.2613C32.5609+17.2613+31.594+18.2282+31.594+19.6881L31.594+26.9685C31.594+28.4284+32.5609+29.3953+34.0208+29.3953C35.4807+29.3953+36.4476+28.4284+36.4476+26.9685L36.4476+19.6881C36.4476+18.2282+35.4807+17.2613+34.0208+17.2613ZM63.1424+17.2613C61.6826+17.2613+60.7156+18.2282+60.7156+19.6881L60.7156+26.9685C60.7156+28.4284+61.6826+29.3953+63.1424+29.3953C64.6023+29.3953+65.5692+28.4284+65.5692+26.9685L65.5692+19.6881C65.5692+18.2282+64.6023+17.2613+63.1424+17.2613ZM24.3136+22.1149C20.1899+22.1149+17.0332+25.2716+17.0332+29.3953L17.0332+73.0778C17.0332+77.2014+20.1899+80.3582+24.3136+80.3582L72.8496+80.3582C76.9733+80.3582+80.1301+77.2014+80.1301+73.0778L80.1301+29.3953C80.1301+25.2716+76.9733+22.1149+72.8496+22.1149L67.996+22.1149L67.996+26.9685C67.996+29.6418+65.8157+31.8221+63.1424+31.8221C60.4692+31.8221+58.2888+29.6418+58.2888+26.9685L58.2888+22.1149L38.8744+22.1149L38.8744+26.9685C38.8744+29.6418+36.6941+31.8221+34.0208+31.8221C31.3475+31.8221+29.1672+29.6418+29.1672+26.9685L29.1672+22.1149L24.3136+22.1149ZM21.8868+39.1025L75.2765+39.1025L75.2765+73.0778C75.2765+74.5376+74.3095+75.5046+72.8496+75.5046L24.3136+75.5046C22.8537+75.5046+21.8868+74.5376+21.8868+73.0778L21.8868+39.1025ZM39.3294+47.3688L34.0208+49.7956L34.7792+53.4358L38.6469+51.464L38.6469+67.9966L43.273+67.9966L43.273+47.3688L39.3294+47.3688ZM51.9943+47.3688L50.7809+58.0619C51.5108+57.8154+52.2218+57.7586+53.4352+57.7586C57.5589+57.7586+59.2747+58.9909+59.2747+61.1713C59.2747+63.3516+57.047+64.3564+55.1037+64.3564C53.1603+64.3564+51.5203+63.854+50.5534+63.3706L49.5675+67.0108C50.7809+67.7407+52.9802+68.2242+55.407+68.2242C60.7441+68.2242+64.1283+64.8304+64.1283+60.9437C64.1283+58.5169+63.1614+56.8296+61.7015+55.8626C60.2416+54.8957+58.2604+54.4217+56.3171+54.4217L55.1037+54.4217L55.6345+51.2365L63.3699+51.2365L63.3699+47.3688L51.9943+47.3688Z"
+                opacity="1"
+                fill="#ff0000"
+              />
+            </svg>
+            <span class="filterName">Deadline</span>
+          </div>
+          <div class="filterOptions">
+            <ul>
+              <li id="o1">Mon</li>
+              <li id="o2">Tue</li>
+              <li id="o3">Wed</li>
+              <li id="o4">Thu</li>
+              <li id="o5">Fri</li>
+            </ul>
+          </div>
+        </div>
+        <div class="filter" id="anytimeFilter">
+          <div class="filterMetadata">
+            <svg
+              id="anytimeClock"
+              style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;"
+              version="1.1"
+              viewBox="0 0 96 96"
+              class="highlighted"
+            >
+              <path
+                d="M47.5837+8.65322C26.411+8.65322+9.21129+25.8529+9.21129+47.0256C9.21129+68.1983+26.411+85.398+47.5837+85.398C68.7564+85.398+85.9561+68.1983+85.9561+47.0256C85.9561+25.8529+68.7564+8.65322+47.5837+8.65322ZM47.5837+11.99C66.9531+11.99+82.6193+27.6562+82.6193+47.0256C82.6193+66.395+66.9531+82.0613+47.5837+82.0613C28.2143+82.0613+12.548+66.395+12.548+47.0256C12.548+27.6562+28.2143+11.99+47.5837+11.99ZM67.6692+23.6522C67.1786+23.6381+66.7066+23.8407+66.3789+24.2062L49.5583+42.4278C48.9346+42.1595+48.2627+42.0209+47.5837+42.0205C44.8194+42.0205+42.5786+44.2614+42.5786+47.0256C42.5786+49.7899+44.8194+52.0307+47.5837+52.0307C47.8632+52.0312+48.1422+52.0083+48.4179+51.9623L54.4657+62.8523C54.9138+63.6585+55.9306+63.9488+56.7369+63.5007C57.5431+63.0526+57.8334+62.0358+57.3853+61.2295L51.331+50.3363C52.1397+49.4229+52.587+48.2456+52.5888+47.0256C52.5884+46.2112+52.3893+45.4093+52.0088+44.6893L68.8293+26.4676C69.2814+25.9904+69.4112+25.2921+69.1608+24.6843C68.9103+24.0765+68.3263+23.6724+67.6692+23.6522Z"
+                opacity="1"
+                fill="#000000"
+              />
+            </svg>
+            <span class="filterName highlighted">Anytime</span>
+          </div>
+        </div>
+      </div>
+      <div class="taskViewContainer"></div>
+    </div>
+  </body>
+  <script>
+    initBody();
+    initFilters();
+    applyFilters();
+    reportStats();
+  </script>
+</html>

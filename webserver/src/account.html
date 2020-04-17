@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Helix - Account</title>
+  </head>
+  <script>
+    function setCookie(cname, cvalue, exhours) {
+      var d = new Date();
+      d.setTime(d.getTime() + exhours * 60 * 60 * 1000);
+      var expires = "expires=" + d.toUTCString();
+      document.cookie = cname + "=" + cvalue + ";" + expires + ";";
+    }
+    function getCookie(cname) {
+      var name = cname + "=";
+      var decodedCookie = decodeURIComponent(document.cookie);
+      var ca = decodedCookie.split(";");
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == " ") {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+    function checkCookie(cname) {
+      var value = getCookie(cname);
+      return value != "";
+    }
+    const username = getCookie("username");
+    const password = getCookie("password");
+    function deleteUser() {
+      console.info("deleting user…");
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+          switch (req.status) {
+            case 200:
+              alert("Successfully deleted account!");
+              document.location.href = "SUPERPATH/register";
+              break;
+            default:
+              alert(
+                "Server response not ok. Status code: " +
+                  req.status.toString() +
+                  " " +
+                  req.responseText.toString()
+              );
+              enableButtons();
+          }
+        }
+      };
+      req.open("POST", "SUPERPATH/api/deleteuser", true);
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+    function disableButtons() {
+      var buttons = document.querySelectorAll("button");
+      buttons.forEach(button => {
+        button.disabled = true;
+      });
+    }
+    function enableButtons() {
+      var buttons = document.querySelectorAll("button");
+      buttons.forEach(button => {
+        button.disabled = false;
+      });
+    }
+    function showUserInfo() {
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+          if (req.status == 200) {
+            var user = JSON.parse(req.responseText);
+            var d = new Date(user.joined);
+            document.getElementById("info-ul").innerHTML = document
+              .getElementById("info-ul")
+              .innerHTML.replace("USERNAME", user.username)
+              .replace("FIRSTNAME", user.firstName)
+              .replace("LASTNAME", user.lastName)
+              .replace("EMAIL", user.email)
+              .replace("JOINED", d.toDateString());
+          }
+        }
+      };
+      req.open("POST", "SUPERPATH/api/getuser", true);
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+    function resetTasks() {
+      console.info("resetting tasks…");
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+          if (req.status != 200) {
+            alert(
+              "Server response not ok. Status code: " +
+                req.status.toString() +
+                "\n" +
+                req.responseText
+            );
+          } else {
+            alert("Successfully reset tasks");
+          }
+        }
+      };
+      req.open("POST", "SUPERPATH/api/resettasks", true);
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+    function changeUser() {
+      var parameter = document.getElementById("inputUserParameterName").value;
+      var value = document.getElementById("inputUserParameterValue").value;
+      var dict = { username: username, password: password };
+      switch (parameter) {
+        case "newUsername":
+          dict.newUsername = value;
+          break;
+        case "newPassword":
+          dict.newPassword = value;
+          break;
+        case "firstName":
+          dict.firstName = value;
+          break;
+        case "lastName":
+          dict.lastName = value;
+          break;
+        case "email":
+          dict.email = value;
+      }
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+          switch (req.status) {
+            case 200:
+              alert("Updated " + parameter + " to " + value);
+              if (parameter == "newUsername" || parameter == "newPassword") {
+                document.location.href = "SUPERPATH/login";
+              }
+              break;
+            case 406:
+              alert(
+                "Make sure your parameters are valid:\n" + req.responseText
+              );
+              break;
+            default:
+              alert(
+                "Server response not ok. Status code: " + req.status.toString()
+              );
+          }
+          enableButtons();
+        }
+      };
+      req.open("POST", "SUPERPATH/api/changeuser", true);
+      req.send(JSON.stringify(dict));
+    }
+    function initBody() {
+      document.getElementById("deleteBtn").addEventListener("click", () => {
+        disableButtons();
+        if (document.getElementById("checkResetTasks").checked) {
+          resetTasks();
+        }
+        deleteUser();
+        enableButtons();
+      });
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        disableButtons();
+        resetTasks();
+        enableButtons();
+      });
+      document.getElementById("changeUserBtn").addEventListener("click", () => {
+        disableButtons();
+        changeUser();
+      });
+    }
+    function requestUserData() {
+      disableButtons();
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+          if (req.status == 200) {
+            alert("Sent data successfully.");
+          } else {
+            alert(
+              "Server response not ok. Status code: " +
+                req.status +
+                "\n\n" +
+                req.responseText
+            );
+          }
+          enableButtons();
+        }
+      };
+      req.open("POST", "SUPERPATH/api/requestdata");
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+    function subscribeNewsletter() {
+      disableButtons();
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+          if (req.status == 200) {
+            alert("Subscribed to newsletter. Thanks!");
+            updateNewsletterSettings();
+          } else {
+            alert(
+              "Server response not ok. Response code: " +
+                req.status +
+                "\n\n" +
+                req.responseText
+            );
+          }
+          enableButtons();
+        }
+      };
+      req.open("POST", "SUPERPATH/api/newsletter/subscribe", true);
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+    function unsubscribeNewsletter() {
+      disableButtons();
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+          if (req.status == 200) {
+            alert("Unsubscribed from newsletter.");
+            updateNewsletterSettings();
+          } else {
+            alert(
+              "Server response not ok. Response code: " +
+                req.status +
+                "\n\n" +
+                req.responseText
+            );
+          }
+          enableButtons();
+        }
+      };
+      req.open("POST", "SUPERPATH/api/newsletter/unsubscribe", true);
+      req.send(JSON.stringify({ username: username }));
+    }
+    function updateNewsletterSettings() {
+      var req = new XMLHttpRequest();
+      req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+          if (req.status == 200) {
+            var user = JSON.parse(req.responseText);
+            if (user.newsletter) {
+              document.getElementById("newsletterStatusDescription").innerHTML =
+                "You are currently subscribed to the Helix newsletter.";
+              document.getElementById("newsletterBtn").innerHTML =
+                "unsubscribe";
+              document.getElementById("newsletterBtn").onclick = () => {
+                unsubscribeNewsletter();
+              };
+            } else {
+              document.getElementById("newsletterStatusDescription").innerHTML =
+                "You are currently opted out from the Helix newsletter.";
+              document.getElementById("newsletterBtn").innerHTML = "subscribe";
+              document.getElementById("newsletterBtn").onclick = () => {
+                subscribeNewsletter();
+              };
+            }
+          }
+        }
+      };
+      req.open("POST", "SUPERPATH/api/getuser", true);
+      req.send(JSON.stringify({ username: username, password: password }));
+    }
+  </script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      background-color: #fafafa;
+      font-family: "Poppins", "Sans-serif", "Times New Roman";
+      overflow-x: hidden;
+    }
+    .noselect {
+      user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -khtml-user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    nav {
+      background-color: #ffffff;
+      height: 8%;
+      width: 100%;
+      display: flex;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px #cccccc;
+    }
+    nav > .placeholder {
+      flex-grow: 2;
+      width: 300px;
+      height: 100%;
+    }
+    nav > h2#helix {
+      font-weight: 600;
+      font-size: 14pt;
+      padding-left: 20px;
+      letter-spacing: 4px;
+      flex-grow: 1;
+    }
+    .settingContainer > button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      flex-grow: 1;
+      font-weight: 500;
+      font-size: 16px;
+      transition: 0.3s;
+      background-color: white;
+    }
+    .settingContainer > button:hover {
+      background-color: #eeeeee;
+    }
+    .settingContainer > button:disabled,
+    button#deleteBtn:disabled {
+      background-color: #333333;
+      color: white;
+    }
+    button#deleteBtn {
+      color: #dd0027;
+    }
+    button#deleteBtn:hover {
+      color: white;
+      background-color: #dd0027;
+    }
+    .settingsContainer {
+      width: 100%;
+      display: flex;
+      margin-top: 20px;
+      margin-left: 20px;
+      flex-direction: column;
+    }
+    .settingContainer {
+      width: 90%;
+      margin-top: 15px;
+    }
+    .settingContainer > span.settingTitle {
+      font-weight: 500;
+      font-size: 18px;
+    }
+    .settingContainer > span.settingDescription {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    }
+    .settingContainer > hr {
+      color: #fafafa;
+    }
+    #inputUserParameterValue {
+      border: 1px solid grey;
+      border-radius: 6px;
+      height: 28px;
+      width: 200px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #030303;
+        color: white;
+      }
+      nav {
+        background-color: #333333;
+        color: #eeeeee;
+        box-shadow: none;
+      }
+      #inputUserParameterValue {
+        background-color: #333333;
+        border: none;
+        color: white;
+      }
+      .settingContainer > button {
+        color: white;
+        background-color: #1a1a1a;
+      }
+      .settingContainer > button:hover {
+        background-color: #333333;
+      }
+    }
+  </style>
+  <body>
+    <nav>
+      <h2 id="helix" class="noselect">HELIX</h2>
+      <div class="placeholder"></div>
+    </nav>
+    <div class="settingsContainer">
+      <div class="settingContainer">
+        <span class="settingTitle">Your info</span>
+        <hr />
+        <p class="settingDescription">
+          The data we have from you. The password is not shown as it is only
+          stored encrypted in the database.
+        </p>
+        <ul id="info-ul">
+          <li>username: USERNAME</li>
+          <li>first name: FIRSTNAME</li>
+          <li>last name: LASTNAME</li>
+          <li>email: EMAIL</li>
+          <li>joined: JOINED</li>
+        </ul>
+      </div>
+      <div class="settingContainer">
+        <span class="settingTitle">Update information</span>
+        <hr />
+        <select name="parameterName" id="inputUserParameterName">
+          <option value="newUsername">username</option>
+          <option value="firstName">first name</option>
+          <option value="lastName">last name</option>
+          <option value="email">email</option>
+          <option value="newPassword">password</option>
+        </select>
+        <input
+          type="text"
+          name="userParameter"
+          id="inputUserParameterValue"
+          placeholder="value"
+        />
+        <button id="changeUserBtn">
+          change
+        </button>
+      </div>
+      <div class="settingContainer">
+        <span class="settingTitle">Download your data</span>
+        <hr />
+        <p class="settingDescription">
+          Download all data we have from you (we will send it to you by email).
+        </p>
+        <button onclick="requestUserData()">Request data</button>
+      </div>
+      <div class="settingContainer">
+        <span class="settingTitle">Manage newsletter subscription</span>
+        <hr />
+        <p class="settingDescription" id="newsletterStatusDescription">
+          loading...
+        </p>
+        <button id="newsletterBtn">...</button>
+      </div>
+      <div class="settingContainer">
+        <span class="settingTitle">Reset tasks</span>
+        <hr />
+        <p class="settingDescription">Delete all your tasks.</p>
+        <button id="resetBtn">
+          reset tasks
+        </button>
+      </div>
+      <div class="settingContainer">
+        <span class="settingTitle">Delete account</span>
+        <hr />
+        <p class="settingDescription">
+          Delete your account. No undo!
+        </p>
+        <input type="checkbox" name="resetTasks" id="checkResetTasks" />also
+        reset tasks<br />
+        <button id="deleteBtn">
+          delete account
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    initBody();
+    showUserInfo();
+    updateNewsletterSettings();
+  </script>
+</html>

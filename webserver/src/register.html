@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Helix - Register</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins:200,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #fafafa;
+      }
+      .noselect {
+        user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+      nav {
+        background-color: #ffffff;
+        height: 60px;
+        width: 100%;
+        display: flex;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #cccccc;
+      }
+      nav > .placeholder {
+        flex-grow: 2;
+        width: 300px;
+        height: 100%;
+      }
+      nav > h2#helix {
+        font-weight: 600;
+        font-size: 14pt;
+        padding-left: 20px;
+        letter-spacing: 4px;
+        flex-grow: 1;
+        margin: auto 0px;
+        font-family: "Poppins", "Sans-serif";
+      }
+      .formContainer {
+        background-color: #eaeaea;
+        width: 500px;
+        height: 500px;
+        border-radius: 50px;
+        margin: auto;
+      }
+      .formContainer > h2 {
+        font-family: "Poppins", "Sans-Serif";
+        font-weight: 600;
+        margin-left: 30px;
+        padding-top: 20px;
+      }
+      .formContainer > form#registerForm {
+        display: grid;
+        grid-template-columns: 200px 200px;
+        grid-template-rows: auto auto;
+        column-gap: 30px;
+        margin-left: 30px;
+      }
+      form#registerForm > div.fieldGroup {
+        margin: 20px 0px;
+      }
+      form#registerForm > div.fieldGroup > input {
+        background-color: white;
+        border: none;
+        border-radius: 6px;
+        height: 24px;
+        width: 190px;
+      }
+      form#registerForm > div.fieldGroup#fieldGroupEmail {
+        grid-column-start: 1;
+        grid-column-end: 3;
+      }
+      form#registerForm > div.fieldGroup#fieldGroupEmail > input {
+        width: 420px;
+      }
+      form#registerForm > div.fieldGroup > span {
+        font-family: "Poppins", "Sans-Serif";
+        font-weight: 200;
+        font-size: 24px;
+      }
+      .buttonBar {
+        margin: 45px 40px;
+        display: flex;
+      }
+      .placeholder {
+        flex-grow: 1;
+      }
+      button.btn {
+        color: white;
+        background-color: #4884f0;
+        font-family: "Poppins", "Sans-Serif";
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        border-radius: 6px;
+        width: 90px;
+        height: 35px;
+        transition: 0.2s;
+      }
+      button.btn:hover {
+        transform: scale(1.03);
+      }
+      button.btn:disabled {
+        background-color: #333333;
+        transform: scale(0.8);
+      }
+      .responseBox {
+        height: 120px;
+        width: 70%;
+        padding: 7px;
+      }
+
+      .error {
+        border: 4px dotted red;
+        border-radius: 15px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #030303;
+        }
+        nav {
+          background-color: #333333;
+          color: #eeeeee;
+          box-shadow: none;
+        }
+        .formContainer {
+          background-color: #1a1a1a;
+          color: white;
+        }
+        form#registerForm > div.fieldGroup > input {
+          background-color: #333333;
+          color: white;
+        }
+      }
+      @media screen and (max-width: 600px) {
+        .formContainer {
+          width: 300px;
+          height: unset;
+        }
+
+        .formContainer > form#registerForm {
+          grid-template-columns: 200px;
+          grid-template-rows: auto auto auto auto auto;
+        }
+
+        form#registerForm > div.fieldGroup#fieldGroupEmail {
+          grid-column-start: unset;
+          grid-column-end: unset;
+        }
+        form#registerForm > div.fieldGroup#fieldGroupEmail > input {
+          width: 190px;
+        }
+        .buttonBar > button {
+          margin-bottom: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <h2 id="helix">HELIX</h2>
+    </nav>
+    <div class="formContainer">
+      <h2>register</h2>
+      <form id="registerForm">
+        <div class="fieldGroup">
+          <span>first name</span>
+          <input type="text" name="firstName" id="firstName" />
+        </div>
+        <div class="fieldGroup">
+          <span>last name</span>
+          <input type="text" name="lastName" id="lastName" />
+        </div>
+        <div class="fieldGroup">
+          <span>username</span>
+          <input type="text" name="username" id="username" />
+        </div>
+        <div class="fieldGroup">
+          <span>password</span>
+          <input type="text" name="password" id="password" />
+        </div>
+        <div class="fieldGroup" id="fieldGroupEmail">
+          <span>email</span>
+          <input type="text" name="email" id="email" />
+        </div>
+      </form>
+      <div class="buttonBar">
+        <button id="loginBtn" class="btn">
+          login
+        </button>
+        <div class="placeholder"></div>
+        <button id="registerBtn" class="btn">
+          register
+        </button>
+      </div>
+    </div>
+    <script>
+      function handleResponse(response) {
+        if (response.includes("Registered user")) {
+          document.location.href = "SUPERPATH/login";
+        } else {
+          document.querySelector(".formContainer").innerHTML +=
+            "<div class='responsebox error'><p style='text-align: center; font-size: 20px; font-family: \"Poppins\"'>" +
+            response +
+            "</p></div>";
+          enableButton();
+          document.location.reload();
+        }
+      }
+      function disableButtons() {
+        document.getElementById("registerBtn").disabled = true;
+        document.getElementById("loginBtn").disabled = true;
+      }
+
+      function enableButton() {
+        document.getElementById("registerBtn").disabled = false;
+        document.getElementById("loginBtn").disabled = false;
+      }
+      function sendRegisterData() {
+        disableButtons();
+        var data = {};
+        data["firstName"] = document.querySelector("#firstName").value;
+        data["lastName"] = document.querySelector("#lastName").value;
+        data["username"] = document.querySelector("#username").value;
+        data["password"] = document.querySelector("#password").value;
+        data["email"] = document.querySelector("#email").value;
+        resp = "";
+        var req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+          if (req.readyState == XMLHttpRequest.DONE) {
+            handleResponse(this.responseText);
+          }
+        };
+        req.open("POST", "SUPERPATH/api/register", true);
+        req.send(JSON.stringify(data));
+      }
+
+      document
+        .querySelector("button#registerBtn")
+        .addEventListener("click", sendRegisterData);
+      document
+        .querySelector("button#loginBtn")
+        .addEventListener("click", function() {
+          disableButtons();
+          document.location.href = "SUPERPATH/login";
+        });
+    </script>
+  </body>
+</html>

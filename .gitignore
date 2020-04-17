@@ -1,0 +1,8 @@
+test.py
+__pycache__
+.pytest_cache
+.coverage*
+*.log
+mynewsletter.py
+cov.xml
+*.json

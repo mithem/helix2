@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Helix - Welcome</title>
+        <script>
+        function setCookie(cname, cvalue, exhours) {
+            var d = new Date();
+            d.setTime(d.getTime() + exhours * 60 * 60 * 1000);
+            var expires = "expires=" + d.toUTCString();
+            document.cookie = cname + "=" + cvalue + ";" + expires + ";";
+        }
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(";");
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == " ") {
+                c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+            return "";
+            }
+            function checkCookie(cname) {
+            var value = getCookie(cname);
+            return value != "";
+            }
+            const username = getCookie("username")
+            const password = getCookie("password")
+            if(username !== "debug"){
+                document.location.href = "SUPERPATH/dashboard";
+            }else if (username !== "" && password !== "") {
+                document.location.href = "SUPERPATH/login";
+            }
+        </script>
+    </head>
+        <body>
+            <h1>Welcome to the Helix Server!</h1>
+            <b>Note:</b> this overview is old. Quite some things have changed. API now under /api/*
+            <p>This server has access to the Helix database. Overview:</p>
+            <ul>
+                <li>/ (this page)</li><br>
+                <li><a href="./overview">/overview</a><br>overview of current tasks (based on due_date and deadline)</li>
+                <li><a href="./gettasks">/gettasks?parameter=value</a><br>a GET API-Endpoint to get the current tasks from the database. Parameters: <ul><li>general</li><li>title</li><li>description</li><li>createdAt</li><li>dueDate</li><li>deadline</li><li>id</id><li>precise(bool)</li></ul></li>
+                <li><a href="./helloworld">/helloworld</a><br>test side for the server cuz iz kool
+            </ul>
+            <h4>API</h4>
+            <p>Besides the GET-Endpoint above (which you can access simply in the address bar of the browser) there are the following POST request endpoints (all parameters like title/description are encapsulated in the request's body):</p>
+            <ul>
+                <li>/newtask<br>accepts title, description, dueDate, deadline</li>
+                <li>/deletetask<br>uses the id attribute</li>
+                <li>/deletealltasks</li>
+            </ul>
+        </body>
+    </html>
