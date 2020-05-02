@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
-import base
+
 import markdown
+
+import base
 
 
 class HelixNewsletterGUI(tk.Frame):
