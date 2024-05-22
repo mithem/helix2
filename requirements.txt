@@ -1,4 +1,4 @@
-PyMySQL==0.9.3
+PyMySQL==1.1.1
 fileloghelper>=1.6.0
 yagmail==0.11.224
 tabulate==0.8.5
